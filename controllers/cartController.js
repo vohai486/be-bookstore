@@ -4,6 +4,7 @@ const { isValidObjectId } = require('../utils/checkIsValidObjectId')
 
 exports.getCart = async (req, res) => {
   const id = req.user._id || null
+
   const cart = await Cart.findOne({ user: id })
     .populate(
       'cartItems.product',
@@ -13,16 +14,17 @@ exports.getCart = async (req, res) => {
   if (!cart) {
     return res.status(404).json({ msg: 'Cart not found' })
   }
+
   return res.status(200).json({
     status: 'success',
-    total: cart.cartItems.length,
     data: {
-      data: cart || [],
+      data: cart.cartItems || [],
     },
   })
 }
 exports.addCart = async (req, res) => {
   const id = req.user._id || null
+  const cartKey = `cart:${id}`
 
   const { bookId, qty } = req.body
   if (!isValidObjectId(id.toString())) {
@@ -40,7 +42,6 @@ exports.addCart = async (req, res) => {
     Cart.findOne({ user: id }),
     Book.findOne({ _id: bookId }).lean(),
   ])
-  // const cart = await Cart.findOne({ user: id })
   if (!cart) {
     return res.status(404).json({ msg: 'Cart not found' })
   }
@@ -52,7 +53,6 @@ exports.addCart = async (req, res) => {
     (item) => item.product.toString() === bookId.toString()
   )
   if (index > -1) {
-    // cart.cartItems[index].qty += qty
     cart.cartItems[index].qty += qty
   } else {
     cart.cartItems.push({ product: bookId, qty })
@@ -68,6 +68,8 @@ exports.addCart = async (req, res) => {
 }
 exports.updateCart = async (req, res) => {
   const id = req.user._id || null
+  const cartKey = `cart:${id}`
+
   if (!isValidObjectId(id.toString())) {
     return res.status(404).json({
       msg: 'Không tìm thấy người dùng này',
@@ -83,7 +85,6 @@ exports.updateCart = async (req, res) => {
     (item) => item.product.toString() === bookId.toString()
   )
   if (index > -1) {
-    // cart.cartItems[index].qty += qty
     cart.cartItems[index].qty = qty
   }
   if (qty <= 0) {
@@ -107,7 +108,7 @@ exports.removeCart = async (req, res) => {
     res.status(404).json({ msg: 'Cart not found' })
   }
   const { bookIdList } = req.body
-  bookIdList?.forEach((id) => {
+  bookIdList?.forEach(async (id) => {
     const index = cart.cartItems.findIndex(
       (item) => item.product.toString() === id.toString()
     )
