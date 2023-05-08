@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/UserModel')
 const fs = require('fs')
 const path = require('path')
-const redis = require('../config/redis')
 const mongoose = require('mongoose')
 const { isValidObjectId } = require('../utils/checkIsValidObjectId')
 const { Import } = require('../models/warehouseModel')
@@ -217,15 +216,7 @@ exports.getABook = async (req, res) => {
       msg: 'No document found with that ID',
     })
   }
-  const cachedBook = await redis.get(id)
-  if (cachedBook) {
-    return res.status(200).json({
-      status: 'success',
-      data: {
-        data: JSON.parse(cachedBook),
-      },
-    })
-  }
+
   const book = await Book.findById(id)
     .populate({ path: 'category', select: 'name' })
     .lean()
@@ -235,7 +226,6 @@ exports.getABook = async (req, res) => {
       msg: 'No document found with that ID',
     })
   }
-  redis.set(id, JSON.stringify(book), 'EX', 100)
   return res.status(200).json({
     status: 'success',
     data: {
@@ -282,8 +272,7 @@ exports.updateABook = async (req, res) => {
     new: true,
     runValidators: true,
   }).populate({ path: 'category', select: 'name' })
-  redis.set(req.params.id, JSON.stringify(newBook), 'EX', 100)
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       data: newBook,

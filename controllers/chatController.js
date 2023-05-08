@@ -40,19 +40,11 @@ exports.getListUserChat = async (req, res) => {
     //   select: 'name',
     // })
     const docs = await Chat.aggregate([
-      // {
-      //   $match: {
-      //     sender: true,
-      //   },
-      // },
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
+      { $sort: { createdAt: -1 } },
       {
         $group: {
           _id: '$user',
+          lastMessage: { $first: '$$ROOT' },
           chatId: {
             $first: '$_id',
           },
@@ -71,9 +63,14 @@ exports.getListUserChat = async (req, res) => {
         },
       },
       {
+        $sort: {
+          'lastMessage.createdAt': -1,
+        },
+      },
+      {
         $lookup: {
           from: 'users',
-          localField: '_id',
+          localField: 'lastMessage.user',
           foreignField: '_id',
           as: 'userInfo',
         },

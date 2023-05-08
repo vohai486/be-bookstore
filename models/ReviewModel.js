@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 const Book = require('./BookModel')
 const User = require('./UserModel')
-const redis = require('../config/redis')
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -76,7 +75,6 @@ reviewSchema.statics.calcAverageRatings = async function (bookId) {
       }
     )
   }
-  await redis.set(bookId, JSON.stringify(book), 'EX', 100)
 }
 reviewSchema.pre('save', async function () {
   this.full_slug =
