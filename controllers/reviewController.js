@@ -210,51 +210,43 @@ exports.deleteReview = async (req, res) => {
 exports.likeReview = async (req, res) => {
   const idUser = req.user._id || null
   const { id } = req.params
-  const review = await Review.findById(id).lean()
+  const review = await Review.findById(id)
   const index = review.likes.findIndex(
     (el) => el.toString() === idUser.toString()
   )
   if (index > -1) {
     return res.status(400).json({ msg: 'You liked this Review.' })
   }
-  const newreview = await Review.findByIdAndUpdate(
-    id,
-    {
-      $push: { likes: idUser },
-      $inc: { likes_count: 1 },
-    },
-    { new: true }
-  ).lean()
-  newreview.is_liked = true
+  review.likes.push(idUser)
+  review.likes_count = (review.likes_count || 0) + 1
+  review.is_liked = true
+  await review.save()
   return res.status(200).json({
     status: 'success',
     data: {
-      data: newreview,
+      data: review,
     },
   })
 }
 exports.unLikeReview = async (req, res) => {
   const idUser = req.user._id || null
   const { id } = req.params
-  const review = await Review.findById(id).lean()
+  const review = await Review.findById(id)
   const index = review.likes.findIndex(
     (el) => el.toString() === idUser.toString()
   )
   if (index <= 0) {
     return res.status(400).json({ msg: `You dont't liked this Review.` })
   }
-  const newReview = await Review.findByIdAndUpdate(
-    id,
-    {
-      $pull: { likes: idUser },
-      $inc: { likes_count: -1 },
-    },
-    { new: true }
-  ).lean()
+
+  review.likes.splice(index, 1)
+  review.likes_count = (review.likes_count || 1) - 1
+
+  await review.save()
   return res.status(200).json({
     status: 'success',
     data: {
-      data: newReview,
+      data: review,
     },
   })
 }

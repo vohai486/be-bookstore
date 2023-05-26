@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Category = require('./CategoryModel')
+const { default: slugify } = require('slugify')
 
 const bookSchema = new mongoose.Schema(
   {
@@ -7,6 +8,7 @@ const bookSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    name_unsigned: String,
     thumbnail_url: String,
     images: [String],
     description: {

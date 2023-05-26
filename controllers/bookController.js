@@ -118,6 +118,7 @@ exports.getAllBooks = async (req, res, next) => {
     'category',
     'rating',
     'q',
+    'price',
   ]
   excludedFields.forEach((el) => delete queryObj[el])
   // filtering
@@ -144,11 +145,21 @@ exports.getAllBooks = async (req, res, next) => {
     }
   }
 
-  let query = Book.find(queryResult)
   if (req.query.price) {
     const pricebetween = req.query.price.split(',')
-    query.where('price').gte(pricebetween[0]).lte(pricebetween[1])
+    if (pricebetween[0]) {
+      queryResult.price = {
+        $gte: +pricebetween[0],
+      }
+    }
+    if (pricebetween[1]) {
+      queryResult.price = queryResult.price
+        ? { ...queryResult.price, $lte: +pricebetween[1] }
+        : { $lte: +pricebetween[1] }
+    }
   }
+
+  let query = Book.find(queryResult)
 
   if (req.query.sort === 'top_seller') {
     query = query.sort('-quantity_sold')
@@ -309,15 +320,32 @@ exports.deleteBook = async (req, res) => {
 
 exports.searchBook = async (req, res) => {
   const q = decodeURIComponent(req.query.q)
-
   const docs = await Book.find({
-    name: {
-      $regex: q,
-      $options: 'i',
-    },
+    $or: [
+      {
+        name: {
+          $regex: q,
+          $options: 'i',
+        },
+      },
+      {
+        name_unsigned: {
+          $regex: q,
+          $options: 'i',
+        },
+      },
+    ],
   })
     .limit(req.query.limit || 7)
     .lean()
+  // const docs = await Book.find({
+  //   name: {
+  //     $regex: q,
+  //     $options: 'i',
+  //   },
+  // })
+  //   .limit(req.query.limit || 7)
+  //   .lean()
   return res.status(200).json({
     data: {
       data: docs,
