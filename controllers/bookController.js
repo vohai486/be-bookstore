@@ -214,7 +214,6 @@ exports.getAllBooks = async (req, res, next) => {
     },
   })
 }
-
 exports.getABook = async (req, res) => {
   const { id } = req.params
   if (!isValidObjectId(id)) {

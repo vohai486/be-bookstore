@@ -19,7 +19,8 @@ const http = require('http').createServer(app)
 
 const io = require('socket.io')(http, {
   cors: {
-    origin: 'https://fe-bookstore.vercel.app',
+    // origin: 'https://fe-bookstore.vercel.app',
+    origin: '*',
     // https://fe-bookstore.vercel.app/
     // http://127.0.0.1:5173
     methods: ['GET', 'POST'],
@@ -28,7 +29,8 @@ const io = require('socket.io')(http, {
 global.io = io
 socketServer(io)
 
-app.use('/api/v1', apiRouter)
+// app.use('/api/v1', apiRouter)
+app.use('/api', apiRouter)
 
 app.all('*', (req, res, next) => {
   return res.status(404).json({
